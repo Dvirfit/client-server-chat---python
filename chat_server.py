@@ -102,11 +102,12 @@ def sending_server(conn, group_to_send):
             print('into the while')
             mass_to_send = conn.recv(1024).decode(FORMAT)
             print('after the listening')
-            if mass_to_send == '###':
-                return
             for c in groups[group_to_send]['connections']:
                 c.send(mass_to_send.encode(FORMAT))
                 print(f'sent to: {c}: {mass_to_send}')
+            if '###' in mass_to_send:
+                groups[group_to_send]['connections'].remove(conn)
+                return
     except Exception as e:
         print(e)
 
