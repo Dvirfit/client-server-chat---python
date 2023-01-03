@@ -1,7 +1,7 @@
 import socket
 import time
 import threading
-# comment to commit
+
 HOST = '127.0.0.1'  # The server's hostname or IP address
 PORT = 50001  # The port used by the server
 FORMAT = 'utf-8'
@@ -13,9 +13,9 @@ def start_client():
 
     starting_massage = client_socket.recv(1024).decode(FORMAT)
     choice = input(starting_massage)
+    client_socket.send(choice.encode(FORMAT))
     if choice == '3':
         return
-    client_socket.send(choice.encode(FORMAT))
     print(client_socket.recv(1024).decode(FORMAT))
     if '1' in choice:  # the first option, connect to a chat
         name = input()
@@ -56,28 +56,30 @@ def start_client():
         client_socket.close()
         return
     # chating
-    receiver = threading.Thread(target=client_rec_massage, args=(client_socket,))  # Creating new Thread object.
+    receiver = threading.Thread(target=client_rec_massage, args=(client_socket,name))  # Creating new Thread object.
     receiver.start()  # Starting the new thread (<=> handling new client)
     client_sen_massage(client_socket, name)
+    receiver.join()     #wait for the thred to end befor closing the socket
 
     client_socket.close()  # Closing client's connection with server (<=> closing socket)
 
 
-def client_rec_massage(client_socket):  # function that always listening to server
+def client_rec_massage(client_socket,name):  # function that always listening to server
     while True:
         message = client_socket.recv(1024).decode(FORMAT)
-        if '###' in message:
-            print('Exit from server GoodBay :)')
-            break
+        if '###' in message and name in message:
+            return
         print(message)
 
 
 def client_sen_massage(client_socket, name):  # function that always listening to send
     while True:
         send_msg = name + ': ' + input()
-        client_socket.send(send_msg.encode(FORMAT))
         if '###' in send_msg:
-            break
+            client_socket.send(f'{name} left by ###'.encode(FORMAT))
+            print('Exit from server GoodBay :)')
+            return
+        client_socket.send(send_msg.encode(FORMAT))
 
 
 if __name__ == "__main__":
